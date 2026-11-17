@@ -1,7 +1,7 @@
 "use client";
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { supabaseUrl } from "./url";
+import { publishableKey, supabaseUrl } from "./url";
 
 let client: SupabaseClient | null | undefined;
 
@@ -14,7 +14,7 @@ export function browserClient(): SupabaseClient | null {
   if (client !== undefined) return client;
 
   const url = supabaseUrl();
-  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  const key = publishableKey();
   client = url && key ? createClient(url, key, { auth: { persistSession: false } }) : null;
   return client;
 }

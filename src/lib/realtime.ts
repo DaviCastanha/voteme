@@ -1,4 +1,5 @@
 import "server-only";
+import { secretKey } from "@/lib/supabase/server";
 import { supabaseUrl } from "@/lib/supabase/url";
 
 export const pollChannel = (pollId: string) => `poll:${pollId}`;
@@ -14,7 +15,7 @@ export const POLL_CHANGED = "changed";
  */
 export async function notifyPollChanged(pollId: string): Promise<void> {
   const url = supabaseUrl();
-  const key = process.env.SUPABASE_SECRET_KEY;
+  const key = secretKey();
   if (!url || !key) return;
 
   try {
