@@ -1,26 +1,83 @@
 @import "tailwindcss";
 
+/* Tokens de cor — trocam sozinhos no modo escuro */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --bg: #f7f6f3;
+  --card: #ffffff;
+  --line: #e7e4dd;
+  --ink: #1d1b18;
+  --muted: #6f6a61;
+  --accent: #5b4cf0;
+  --accent-ink: #ffffff;
+  --accent-soft: #ecebfe;
+  --good: #1f9d63;
+  --good-soft: #e3f5ec;
+  --warn: #b7791f;
+  --warn-soft: #fbf1dc;
+  --bad: #d14343;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --bg: #131211;
+    --card: #1c1b19;
+    --line: #2e2c29;
+    --ink: #f1efea;
+    --muted: #a39d93;
+    --accent: #8b80ff;
+    --accent-ink: #12111f;
+    --accent-soft: #26233f;
+    --good: #4cc78d;
+    --good-soft: #17301f;
+    --warn: #e0a84a;
+    --warn-soft: #33270f;
+    --bad: #f07272;
   }
 }
 
+@theme inline {
+  --color-bg: var(--bg);
+  --color-card: var(--card);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-good: var(--good);
+  --color-good-soft: var(--good-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-bad: var(--bad);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+@utility card {
+  @apply rounded-2xl border border-line bg-card p-5 sm:p-6;
+}
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition
+    disabled:cursor-not-allowed disabled:opacity-50;
+}
+@utility btn-primary {
+  @apply btn bg-accent text-accent-ink hover:brightness-110 active:brightness-95;
+}
+@utility btn-ghost {
+  @apply btn border border-line bg-card text-ink hover:bg-bg;
+}
+@utility input {
+  @apply w-full rounded-xl border border-line bg-card px-4 py-3 text-base text-ink outline-none
+    placeholder:text-muted focus:border-accent focus:ring-2 focus:ring-accent/25;
+}
+@utility label {
+  @apply mb-1.5 block text-sm font-medium text-ink;
+}
+@utility chip {
+  @apply inline-flex items-center gap-1 rounded-full bg-bg px-2.5 py-1 text-xs font-medium text-muted;
 }
