@@ -79,7 +79,7 @@ async function AdminView({ params, searchParams }: Pick<PageProps<"/p/[slug]/adm
         </section>
       )}
 
-      <AdminControls slug={poll.slug} adminKey={key} open={open} canRunoff={canRunoff} />
+      <AdminControls slug={poll.slug} title={poll.title} adminKey={key} open={open} canRunoff={canRunoff} />
 
       <Link href={`/p/${poll.slug}`} className="block text-center text-sm font-semibold text-accent hover:underline">
         Ver como votante →

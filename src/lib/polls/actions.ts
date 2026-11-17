@@ -214,3 +214,21 @@ export async function createRunoff(slug: string, key: string): Promise<ActionSta
 
   redirect(`/p/${next.slug}/admin?k=${next.adminKey}`);
 }
+
+/**
+ * Exclui a votação de vez (opções e votos vão junto, por cascade).
+ * `gone: true` quando ela já não existia — aí o cliente só tira da lista local.
+ */
+export async function deletePoll(slug: string, key: string): Promise<ActionState & { gone?: boolean }> {
+  if (!(await getPoll(slug))) return { ok: true, gone: true };
+
+  const poll = await getPollAsAdmin(slug, key);
+  if (!poll) return { error: "Link de administrador inválido." };
+
+  const { error } = await db().from("polls").delete().eq("id", poll.id);
+  if (error) throw dbError(error);
+
+  // quem estiver com a votação aberta recarrega e vê "não encontrada"
+  await notifyPollChanged(poll.id);
+  return { ok: true };
+}

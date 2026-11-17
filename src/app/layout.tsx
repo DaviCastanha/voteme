@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
+import { AboutDialogs, AboutFooter } from "@/components/about/AboutDialogs";
 import "./globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -31,7 +32,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             + Nova votação
           </Link>
         </header>
-        <main className="mx-auto w-full max-w-2xl flex-1 px-4 pt-4 pb-16">{children}</main>
+        <main className="mx-auto w-full max-w-2xl flex-1 px-4 pt-4 pb-10">{children}</main>
+        <AboutFooter />
+        <AboutDialogs />
       </body>
     </html>
   );

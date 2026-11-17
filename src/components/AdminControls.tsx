@@ -1,19 +1,24 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { DeletePollButton } from "@/components/DeletePollButton";
 import { closePoll, createRunoff } from "@/lib/polls/actions";
 
 export function AdminControls({
   slug,
+  title,
   adminKey,
   open,
   canRunoff,
 }: {
   slug: string;
+  title: string;
   adminKey: string;
   open: boolean;
   canRunoff: boolean;
 }) {
+  const router = useRouter();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -23,8 +28,6 @@ export function AdminControls({
       const res = await fn();
       if (res?.error) setError(res.error);
     });
-
-  if (!open && !canRunoff) return null;
 
   return (
     <section className="card space-y-3">
@@ -56,6 +59,14 @@ export function AdminControls({
       )}
 
       {error && <p className="text-sm font-medium text-bad">{error}</p>}
+
+      <DeletePollButton
+        slug={slug}
+        adminKey={adminKey}
+        title={title}
+        variant="full"
+        onDeleted={() => router.replace("/")}
+      />
     </section>
   );
 }

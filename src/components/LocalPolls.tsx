@@ -2,6 +2,7 @@
 
 import { useEffect, useSyncExternalStore } from "react";
 import Link from "next/link";
+import { DeletePollButton } from "@/components/DeletePollButton";
 import {
   readLocalPolls,
   rememberLocalPoll,
@@ -42,14 +43,15 @@ export function MyPolls() {
       <h2 className="text-sm font-semibold tracking-wide text-muted uppercase">Criadas neste aparelho</h2>
       <ul className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-card">
         {polls.map((p) => (
-          <li key={p.slug}>
+          <li key={p.slug} className="flex items-center gap-1 pr-2 hover:bg-bg">
             <Link
               href={`/p/${p.slug}/admin?k=${p.adminKey}`}
-              className="flex items-center justify-between gap-3 px-5 py-4 hover:bg-bg"
+              className="flex min-w-0 flex-1 items-center justify-between gap-3 py-4 pl-5"
             >
               <span className="truncate font-medium">{p.title}</span>
               <span className="shrink-0 text-sm text-muted">Gerenciar →</span>
             </Link>
+            <DeletePollButton slug={p.slug} adminKey={p.adminKey} title={p.title} variant="icon" />
           </li>
         ))}
       </ul>

@@ -42,6 +42,15 @@ export function rememberLocalPoll(poll: Omit<LocalPoll, "createdAt">) {
   }
 }
 
+export function forgetLocalPoll(slug: string) {
+  try {
+    localStorage.setItem(KEY, JSON.stringify(readLocalPolls().filter((p) => p.slug !== slug)));
+    window.dispatchEvent(new Event(EVENT));
+  } catch {
+    /* storage bloqueado */
+  }
+}
+
 export function subscribeLocalPolls(cb: () => void) {
   window.addEventListener(EVENT, cb);
   window.addEventListener("storage", cb);
