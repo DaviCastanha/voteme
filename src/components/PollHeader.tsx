@@ -14,7 +14,9 @@ export function PollHeader({ poll, open }: { poll: Poll; open: boolean }) {
       {poll.description && <p className="text-muted">{poll.description}</p>}
       <div className="flex flex-wrap gap-2">
         {open ? (
-          <span className="chip bg-good-soft text-good">● Aberta</span>
+          <span className="chip bg-good-soft text-good">
+            <span className="live-dot" aria-hidden /> Aberta
+          </span>
         ) : (
           <span className="chip">Encerrada</span>
         )}
@@ -32,10 +34,19 @@ export function PollHeader({ poll, open }: { poll: Poll; open: boolean }) {
 
 export function PollSkeleton() {
   return (
-    <div className="animate-pulse space-y-4" aria-busy>
-      <div className="h-8 w-3/4 rounded-lg bg-line" />
-      <div className="h-5 w-1/3 rounded-lg bg-line" />
-      <div className="card h-64" />
+    <div className="space-y-4" aria-busy aria-label="Carregando">
+      <div className="skeleton h-8 w-3/4 rounded-lg" />
+      <div className="flex gap-2">
+        <div className="skeleton h-6 w-16 rounded-full" />
+        <div className="skeleton h-6 w-24 rounded-full" />
+        <div className="skeleton h-6 w-20 rounded-full" />
+      </div>
+      <div className="card space-y-3">
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="skeleton h-13 rounded-xl" />
+        ))}
+        <div className="skeleton h-12 rounded-xl opacity-70" />
+      </div>
     </div>
   );
 }

@@ -3,8 +3,8 @@ import { tally } from "./tally";
 import type { Poll, PollKind } from "./types";
 
 function poll(kind: PollKind, labels: string[], abstention = false): Poll {
-  const options = labels.map((label, i) => ({ id: `o${i}`, label, position: i, isAbstention: false }));
-  if (abstention) options.push({ id: "abs", label: "Abstenção", position: labels.length, isAbstention: true });
+  const options = labels.map((label, i) => ({ id: `o${i}`, label, position: i, isAbstention: false, imageUrl: null }));
+  if (abstention) options.push({ id: "abs", label: "Abstenção", position: labels.length, isAbstention: true, imageUrl: null });
   return {
     id: "p",
     slug: "test1234",

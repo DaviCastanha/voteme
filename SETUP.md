@@ -88,6 +88,17 @@ O arquivo SQL já está pronto no projeto, é só colar e rodar.
 
 > 💡 Se você rodar o SQL duas vezes sem querer, vai dar erro *"relation already exists"*. Não tem problema, as tabelas já foram criadas na primeira vez.
 
+### 2.1. Atualizações do banco (migrations)
+
+Algumas versões do app trazem um SQL novo na pasta `supabase/migrations/`. Rode **cada arquivo uma vez**, **em ordem de nome**, do mesmo jeito (SQL Editor → New query → colar → Run):
+
+| Arquivo | Versão | O que faz |
+|---|---|---|
+| `20261117000000_init.sql` | 1.0.0 | Cria as tabelas (é o da etapa 2) |
+| `20261117010000_option_images.sql` | 1.2.0 | Permite opções com imagem |
+
+Se você esquecer uma migration, o app continua funcionando, só o recurso novo fica indisponível (e ele avisa qual SQL falta).
+
 ---
 
 ## 3. Copiar as chaves
@@ -282,6 +293,7 @@ Toda vez que você (ou eu) fizer mudanças e der `git push`, a **Vercel publica 
 | Página de votação mostra erro / no terminal aparece **"Supabase não configurado"** | `.env.local` faltando ou com nome errado | Confira se o arquivo se chama exatamente `.env.local` (não `.env.local.txt`), está na raiz do projeto e foi salvo. **Pare e rode de novo** o `npm run dev`, porque ele só lê o arquivo ao iniciar. |
 | Erro com **`PGRST125` / "Invalid path specified in request URL"** | URL copiada com `/rest/v1/` no final | Deixe só `https://xxxx.supabase.co` no `NEXT_PUBLIC_SUPABASE_URL` e reinicie o `npm run dev`. |
 | Erro com **"Invalid API key"** ou **401** | Chave copiada errada (pela metade, com espaço) | Copie de novo do Supabase, use o botão de copiar em vez de selecionar. |
+| Ao criar com imagem: **"Imagens ainda não estão ativadas no banco"** | Falta a migration `20261117010000_option_images.sql` | Rode ela no SQL Editor (etapa 2.1). |
 | Erro com **"Could not find the function public.create_poll"** ou **"relation ... does not exist"** | O SQL da etapa 2 não rodou, ou rodou em outro projeto | Volte na etapa 2. Confira no Table Editor se as 4 tabelas existem. |
 | Erro com **"permission denied"** | SQL rodado pela metade, ou está usando a publishable key no lugar da secret | Confira se `SUPABASE_SECRET_KEY` tem a chave **secret**. Se precisar, rode o SQL de novo num projeto novo. |
 | Voto funciona, mas **não atualiza ao vivo** (só ao recarregar) | Realtime com acesso público desligado | Supabase → **Realtime → Settings** → deixe **"Allow public access"** ligado. (A página também se atualiza sozinha quando você volta pra aba.) |

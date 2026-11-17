@@ -24,13 +24,14 @@ interface PollRow {
   created_at: string;
   admin_token_hash: string;
   parent: { slug: string } | null;
-  poll_options: { id: string; label: string; position: number; is_abstention: boolean }[];
+  // image_url só existe depois da migration 20261117010000 — por isso o select usa poll_options(*)
+  poll_options: { id: string; label: string; position: number; is_abstention: boolean; image_url?: string | null }[];
 }
 
 const POLL_SELECT =
   "id, slug, title, description, kind, max_choices, tally_method, identity_mode, results_visibility," +
   " allow_vote_change, closes_at, closed_at, created_at, admin_token_hash," +
-  " parent:parent_poll_id(slug), poll_options(id, label, position, is_abstention)";
+  " parent:parent_poll_id(slug), poll_options(*)";
 
 /** Carrega a votação. Memoizado por request (metadata + página fazem uma consulta só). */
 const loadPoll = cache(async (slug: string): Promise<{ poll: Poll; adminHash: string } | null> => {
@@ -56,7 +57,13 @@ const loadPoll = cache(async (slug: string): Promise<{ poll: Poll; adminHash: st
     parentSlug: data.parent?.slug ?? null,
     createdAt: data.created_at,
     options: data.poll_options
-      .map((o) => ({ id: o.id, label: o.label, position: o.position, isAbstention: o.is_abstention }))
+      .map((o) => ({
+        id: o.id,
+        label: o.label,
+        position: o.position,
+        isAbstention: o.is_abstention,
+        imageUrl: o.image_url ?? null,
+      }))
       .sort((a, b) => a.position - b.position),
   };
   return { poll, adminHash: data.admin_token_hash };

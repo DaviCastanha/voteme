@@ -18,7 +18,7 @@ npm run dev
 ### Configurar o Supabase (uma vez)
 
 1. Crie um projeto em [supabase.com](https://supabase.com) (o plano free serve).
-2. **SQL Editor** → cole e rode [`supabase/migrations/20261117000000_init.sql`](supabase/migrations/20261117000000_init.sql).
+2. **SQL Editor** → rode, em ordem, cada arquivo de [`supabase/migrations/`](supabase/migrations/).
 3. **Project Settings → API Keys** → copie a URL, a *publishable key* e a *secret key* pro `.env.local`.
 4. Realtime: nada a fazer. Usamos *broadcast* em canais públicos, que já vem habilitado.
 
@@ -38,7 +38,10 @@ npm run dev
 | Integridade | `create_poll` e `cast_vote` são funções Postgres transacionais que validam regras (prazo, nº de escolhas, abstenção, nome) |
 | Ao vivo | O servidor manda um *broadcast* sem dados no canal `poll:<id>`; o cliente faz `router.refresh()`. Resultado oculto continua oculto |
 | Apuração | `src/lib/polls/tally.ts`: métodos plugáveis (hoje só `plurality`). Abstenção conta participação mas não concorre |
-| Preview no WhatsApp | `generateMetadata` por votação (título vira o card do link) |
+| Preview no WhatsApp | `generateMetadata` por votação (título vira o card do link; a 1ª imagem de opção vira a foto) |
+| Opções com imagem | Só o link (https) fica em `poll_options.image_url`; cada aparelho carrega a imagem |
+| Animações | `motion` + keyframes em `globals.css`; tudo respeita `prefers-reduced-motion` |
+| Novidades | `src/content/releases.ts` (a versão do `package.json` tem que bater, há teste) |
 
 ### Estrutura
 
@@ -52,6 +55,6 @@ src/app/                  rotas: /, /nova, /p/[slug], /p/[slug]/admin
 
 ## Roadmap
 
-- **P1:** contas (Supabase Auth + Google) pra levar as votações entre aparelhos · grupos · ranking · disponibilidade de datas · modo telão (QR + resultado em tela cheia) · imagem OG dinâmica
+- **P1:** contas (Supabase Auth + Google) pra levar as votações entre aparelhos · grupos · ranking · disponibilidade de datas · modo telão (QR + resultado em tela cheia) · imagem OG dinâmica · upload de imagem (hoje é só link)
 - **P2:** convites individuais (1 link = 1 voto) · voto ponderado (`ballots.weight` já existe) · quórum · auditoria/ata · modo formal (assembleias, Lei 14.309/2022)
-- **Pendências técnicas:** rate limit no voto/criação (ex.: Upstash) · testes automatizados
+- **Pendências técnicas:** rate limit no voto/criação (ex.: Upstash) · testes de componentes/E2E · região da Vercel perto do Supabase (`gru1`)

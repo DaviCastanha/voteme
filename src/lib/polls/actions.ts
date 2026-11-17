@@ -8,7 +8,7 @@ import { db, dbError } from "@/lib/supabase/server";
 import { newSlug, newToken, sha256 } from "@/lib/crypto";
 import { notifyPollChanged } from "@/lib/realtime";
 import { getPoll, getPollAsAdmin, getTally, VOTER_COOKIE, voterHash } from "./queries";
-import { ABSTENTION_LABEL, APPROVAL_OPTIONS, isOpen } from "./types";
+import { ABSTENTION_LABEL, APPROVAL_OPTIONS, isImageUrl, isOpen } from "./types";
 
 export type ActionState = { error?: string; ok?: boolean } | undefined;
 
@@ -22,6 +22,12 @@ const createSchema = z
     description: z.string().trim().max(1000).optional().default(""),
     kind: z.enum(["single", "multiple", "approval"]),
     options: z.array(z.string().trim().max(120, "Opção muito longa.")),
+    optionImages: z.array(
+      z
+        .string()
+        .trim()
+        .refine((v) => v === "" || isImageUrl(v), "Link de imagem inválido: use um endereço que começa com https://"),
+    ),
     maxChoices: z.coerce.number().int().min(1).max(MAX_OPTIONS).optional(),
     identityMode: z.enum(["anonymous", "named"]),
     resultsVisibility: z.enum(["live", "after_close"]),
@@ -31,11 +37,23 @@ const createSchema = z
     closesAtCustom: z.string().optional(),
   })
   .transform((v) => {
-    const options =
-      v.kind === "approval"
-        ? [...APPROVAL_OPTIONS]
-        : [...new Map(v.options.filter(Boolean).map((o) => [o.toLocaleLowerCase("pt-BR"), o])).values()];
-    return { ...v, options };
+    if (v.kind === "approval") return { ...v, options: [...APPROVAL_OPTIONS], images: [] as string[] };
+
+    // cada linha do formulário = nome + link de imagem (opcional). Só imagem também vale.
+    const seen = new Set<string>();
+    const options: string[] = [];
+    const images: string[] = [];
+    v.options.forEach((raw, i) => {
+      const image = v.optionImages[i] ?? "";
+      if (!raw && !image) return;
+      const label = raw || `Opção ${options.length + 1}`;
+      const key = image || label.toLocaleLowerCase("pt-BR");
+      if (seen.has(key)) return;
+      seen.add(key);
+      options.push(label);
+      images.push(image);
+    });
+    return { ...v, options, images };
   })
   .refine((v) => v.options.length >= 2, { message: "Coloque pelo menos duas opções diferentes." })
   .refine((v) => v.options.length <= MAX_OPTIONS, { message: `No máximo ${MAX_OPTIONS} opções.` });
@@ -48,6 +66,8 @@ function resolveClosesAt(closesIn: string, custom: string | undefined): string |
   return new Date(t).toISOString();
 }
 
+class ImagesNotEnabled extends Error {}
+
 async function insertPoll(args: {
   title: string;
   description: string;
@@ -58,10 +78,13 @@ async function insertPoll(args: {
   allowVoteChange: boolean;
   closesAt: string | null;
   options: string[];
+  /** alinhado com `options`; "" = sem imagem */
+  images?: string[];
   abstention: boolean;
   parentPollId?: string;
 }): Promise<{ slug: string; adminKey: string }> {
   const adminKey = newToken();
+  const hasImages = Boolean(args.images?.some(Boolean));
   // colisão de slug é improvável (31^8), mas tentamos de novo se acontecer
   for (let attempt = 0; attempt < 3; attempt++) {
     const slug = newSlug();
@@ -79,8 +102,11 @@ async function insertPoll(args: {
       p_options: args.options,
       p_abstention_label: args.abstention ? ABSTENTION_LABEL : null,
       p_parent_poll_id: args.parentPollId ?? null,
+      // só manda quando tem imagem: assim continua funcionando antes da migration 20261117010000
+      ...(hasImages ? { p_option_images: args.images } : {}),
     });
     if (!error) return { slug, adminKey };
+    if (hasImages && error.code === "PGRST202") throw new ImagesNotEnabled();
     if (error.code !== "23505") throw dbError(error);
   }
   throw new Error("Não foi possível gerar um link único.");
@@ -92,6 +118,7 @@ export async function createPoll(_prev: ActionState, form: FormData): Promise<Ac
     description: form.get("description") ?? "",
     kind: form.get("kind"),
     options: form.getAll("option"),
+    optionImages: form.getAll("optionImage"),
     maxChoices: form.get("maxChoices") || undefined,
     identityMode: form.get("identityMode"),
     resultsVisibility: form.get("resultsVisibility"),
@@ -106,20 +133,31 @@ export async function createPoll(_prev: ActionState, form: FormData): Promise<Ac
   const closesAt = resolveClosesAt(v.closesIn, v.closesAtCustom);
   if (closesAt === "invalid") return { error: "Escolha um prazo no futuro." };
 
-  const { slug, adminKey } = await insertPoll({
-    title: v.title,
-    description: v.description,
-    kind: v.kind,
-    maxChoices: v.kind === "multiple" && v.maxChoices && v.maxChoices < v.options.length ? v.maxChoices : null,
-    identityMode: v.identityMode,
-    resultsVisibility: v.resultsVisibility,
-    allowVoteChange: v.allowVoteChange,
-    closesAt,
-    options: v.options,
-    abstention: v.abstention,
-  });
+  let created: { slug: string; adminKey: string };
+  try {
+    created = await insertPoll({
+      title: v.title,
+      description: v.description,
+      kind: v.kind,
+      maxChoices: v.kind === "multiple" && v.maxChoices && v.maxChoices < v.options.length ? v.maxChoices : null,
+      identityMode: v.identityMode,
+      resultsVisibility: v.resultsVisibility,
+      allowVoteChange: v.allowVoteChange,
+      closesAt,
+      options: v.options,
+      images: v.images,
+      abstention: v.abstention,
+    });
+  } catch (e) {
+    if (e instanceof ImagesNotEnabled) {
+      return {
+        error: "Imagens ainda não estão ativadas no banco. Rode a migration de imagens no Supabase (ver SETUP.md).",
+      };
+    }
+    throw e;
+  }
 
-  redirect(`/p/${slug}/admin?k=${adminKey}`);
+  redirect(`/p/${created.slug}/admin?k=${created.adminKey}`);
 }
 
 const VOTE_ERRORS: Record<string, string> = {
@@ -140,7 +178,9 @@ export async function castVote(slug: string, _prev: ActionState, form: FormData)
 
   const optionIds = z.array(z.uuid()).safeParse(form.getAll("option"));
   if (!optionIds.success || optionIds.data.length === 0) return { error: VOTE_ERRORS.no_choice };
-  const name = String(form.get("name") ?? "").trim().slice(0, 80);
+  const name = String(form.get("name") ?? "")
+    .trim()
+    .slice(0, 80);
 
   const jar = await cookies();
   let vid = jar.get(VOTER_COOKIE)?.value;
@@ -208,6 +248,7 @@ export async function createRunoff(slug: string, key: string): Promise<ActionSta
     allowVoteChange: poll.allowVoteChange,
     closesAt: null,
     options: poll.options.filter((o) => tied.has(o.id)).map((o) => o.label),
+    images: poll.options.filter((o) => tied.has(o.id)).map((o) => o.imageUrl ?? ""),
     abstention: false,
     parentPollId: poll.id,
   });

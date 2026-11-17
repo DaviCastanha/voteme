@@ -13,6 +13,19 @@ export interface Release {
 
 export const RELEASES: Release[] = [
   {
+    version: "1.2.0",
+    date: "2026-11-17",
+    title: "Opções com imagem e um app mais vivo",
+    items: [
+      "Opções com imagem: ao criar a votação, toque no ícone de imagem ao lado de uma opção e cole o link de uma foto. A votação vira uma grade de cartões com as imagens.",
+      "Só o link é guardado; cada aparelho carrega a imagem direto do site de origem. Se você colar o link da imagem no nome da opção, o app entende sozinho.",
+      "Votar ficou mais gostoso: Sim e Não ganharam botões grandes com reação própria, e todo voto termina com uma confirmação animada.",
+      "Resultados animados: as barras crescem, os números sobem e aparece um “+1” quando chega voto novo ao vivo.",
+      "Quando a votação encerra, quem abre o resultado vê o vencedor sendo revelado (ou Aprovado, Rejeitado, Empate). Toque na tela pra pular.",
+      "Se o seu celular ou computador estiver com “reduzir movimento” ligado, as animações ficam desligadas.",
+    ],
+  },
+  {
     version: "1.1.0",
     date: "2026-11-17",
     title: "Excluir votações e Novidades",

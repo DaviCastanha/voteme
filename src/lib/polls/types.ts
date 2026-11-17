@@ -8,6 +8,8 @@ export interface PollOption {
   label: string;
   position: number;
   isAbstention: boolean;
+  /** Link da imagem (só o texto fica no banco; cada aparelho baixa a imagem). */
+  imageUrl: string | null;
 }
 
 /** Visão pública da votação — nunca inclui o hash do admin. */
@@ -47,4 +49,19 @@ export function isOpen(poll: Pick<Poll, "closedAt" | "closesAt">, now = Date.now
   if (poll.closedAt) return false;
   if (poll.closesAt && new Date(poll.closesAt).getTime() <= now) return false;
   return true;
+}
+
+/** Link aceito como imagem de opção: https e no máximo 2048 caracteres. */
+export function isImageUrl(value: string): boolean {
+  if (value.length > 2048) return false;
+  try {
+    return new URL(value).protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+/** Parece um link direto de imagem? (usado pra mover um link colado no nome pro campo de imagem) */
+export function looksLikeImageLink(value: string): boolean {
+  return isImageUrl(value.trim()) && /\.(avif|webp|png|jpe?g|gif|svg)(\?|#|$)/i.test(value.trim());
 }

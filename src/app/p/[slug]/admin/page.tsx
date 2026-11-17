@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
-import { Suspense } from "react";
+import { Suspense, type CSSProperties } from "react";
+import { Rise } from "@/components/motion/Rise";
 import { AdminControls } from "@/components/AdminControls";
 import { LiveRefresh } from "@/components/LiveRefresh";
 import { RememberPoll } from "@/components/LocalPolls";
@@ -57,29 +58,46 @@ async function AdminView({ params, searchParams }: Pick<PageProps<"/p/[slug]/adm
       <RememberPoll slug={poll.slug} title={poll.title} adminKey={key} />
       <LiveRefresh pollId={poll.id} />
 
-      <PollHeader poll={poll} open={open} />
+      <Rise>
+        <PollHeader poll={poll} open={open} />
+      </Rise>
 
-      {open && <SharePanel slug={poll.slug} title={poll.title} adminKey={key} />}
-
-      <Results poll={poll} result={result} closed={!open} />
-      {poll.resultsVisibility === "after_close" && open && (
-        <p className="-mt-3 px-1 text-xs text-muted">Só você vê o resultado parcial. Os votantes veem ao encerrar.</p>
+      {open && (
+        <Rise i={1}>
+          <SharePanel slug={poll.slug} title={poll.title} adminKey={key} />
+        </Rise>
       )}
+
+      <Rise i={2} className="space-y-2">
+        <Results poll={poll} result={result} closed={!open} />
+        {poll.resultsVisibility === "after_close" && open && (
+          <p className="px-1 text-xs text-muted">Só você vê o resultado parcial. Os votantes veem ao encerrar.</p>
+        )}
+      </Rise>
 
       {participants.length > 0 && (
-        <section className="card">
-          <h2 className="mb-3 text-sm font-semibold tracking-wide text-muted uppercase">Quem votou</h2>
-          <ul className="flex flex-wrap gap-2">
-            {participants.map((p, i) => (
-              <li key={i} className="chip text-ink">
-                {p.name ?? "—"}
-              </li>
-            ))}
-          </ul>
-        </section>
+        <Rise i={3}>
+          <section className="card">
+            <h2 className="mb-3 text-sm font-semibold tracking-wide text-muted uppercase">Quem votou</h2>
+            <ul className="flex flex-wrap gap-2">
+              {participants.map((p, i) => (
+                // chave estável: quem já estava não re-anima; quem acabou de votar entra animado
+                <li
+                  key={`${p.votedAt}-${i}`}
+                  className="chip animate-rise text-ink"
+                  style={{ "--i": Math.min(i, 12) } as CSSProperties}
+                >
+                  {p.name ?? "—"}
+                </li>
+              ))}
+            </ul>
+          </section>
+        </Rise>
       )}
 
-      <AdminControls slug={poll.slug} title={poll.title} adminKey={key} open={open} canRunoff={canRunoff} />
+      <Rise i={4}>
+        <AdminControls slug={poll.slug} title={poll.title} adminKey={key} open={open} canRunoff={canRunoff} />
+      </Rise>
 
       <Link href={`/p/${poll.slug}`} className="block text-center text-sm font-semibold text-accent hover:underline">
         Ver como votante →

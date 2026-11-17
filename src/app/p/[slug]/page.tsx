@@ -3,11 +3,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
+import { EyeOff } from "lucide-react";
 import { LiveRefresh } from "@/components/LiveRefresh";
 import { ManageLink } from "@/components/LocalPolls";
 import { PollHeader, PollSkeleton } from "@/components/PollHeader";
 import { Results } from "@/components/Results";
 import { VoteForm } from "@/components/VoteForm";
+import { VotedBanner } from "@/components/VotedBanner";
+import { Rise } from "@/components/motion/Rise";
 import { getMyBallot, getPoll, getTally } from "@/lib/polls/queries";
 import { isOpen } from "@/lib/polls/types";
 
@@ -16,10 +19,12 @@ export async function generateMetadata({ params }: PageProps<"/p/[slug]">): Prom
   const poll = await getPoll((await params).slug);
   if (!poll) return { title: "Votação não encontrada" };
   const description = poll.description ?? `${poll.options.length} opções · toque pra votar`;
+  // se as opções têm imagem, a primeira vira a foto do preview no WhatsApp
+  const image = poll.options.find((o) => o.imageUrl)?.imageUrl;
   return {
     title: poll.title,
     description,
-    openGraph: { title: `🗳️ ${poll.title}`, description, type: "website" },
+    openGraph: { title: `🗳️ ${poll.title}`, description, type: "website", ...(image ? { images: [image] } : {}) },
   };
 }
 
@@ -44,35 +49,40 @@ async function PollView({ params }: Pick<PageProps<"/p/[slug]">, "params">) {
   return (
     <div className="space-y-5">
       <LiveRefresh pollId={poll.id} />
-      <PollHeader poll={poll} open={open} />
+      <Rise>
+        <PollHeader poll={poll} open={open} />
+      </Rise>
       <ManageLink slug={poll.slug} />
 
-      {mine && (
-        <p className="rounded-xl bg-good-soft px-4 py-3 text-sm font-medium text-good">
-          ✓ Seu voto foi registrado
-          {canVote && " — você ainda pode mudar enquanto estiver aberta."}
-        </p>
-      )}
+      {mine && <VotedBanner pollId={poll.id} canChange={canVote} />}
 
       {canVote && (
-        <VoteForm
-          poll={poll}
-          initialChoices={mine?.optionIds ?? []}
-          initialName={mine?.name ?? null}
-          isChange={Boolean(mine)}
-        />
+        <Rise i={1}>
+          <VoteForm
+            poll={poll}
+            initialChoices={mine?.optionIds ?? []}
+            initialName={mine?.name ?? null}
+            isChange={Boolean(mine)}
+          />
+        </Rise>
       )}
 
-      {showResults ? (
-        <Results poll={poll} result={result} closed={!open} />
-      ) : (
-        <section className="card text-center">
-          <p className="font-medium">O resultado aparece quando a votação encerrar.</p>
-          <p className="mt-1 text-sm text-muted">
-            {result.ballots === 1 ? "1 pessoa já votou" : `${result.ballots} pessoas já votaram`}
-          </p>
-        </section>
-      )}
+      <Rise i={canVote ? 2 : 1}>
+        {showResults ? (
+          <Results poll={poll} result={result} closed={!open} />
+        ) : (
+          <section className="card flex flex-col items-center gap-2 py-8 text-center">
+            <span className="grid size-12 place-items-center rounded-full bg-accent-soft text-accent">
+              <EyeOff size={22} />
+            </span>
+            <p className="font-medium">O resultado aparece quando a votação encerrar.</p>
+            <p className="flex items-center gap-2 text-sm text-muted">
+              <span className="live-dot" aria-hidden />
+              {result.ballots === 1 ? "1 pessoa já votou" : `${result.ballots} pessoas já votaram`}
+            </p>
+          </section>
+        )}
+      </Rise>
 
       <p className="pt-4 text-center text-sm text-muted">
         Precisa decidir alguma coisa?{" "}
